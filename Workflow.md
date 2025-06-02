@@ -10,3 +10,14 @@
    ELSE:
    → For each chunk: - Generate abstraction (with file names tracked)
    → Combine all abstractions: - Inputs: abstraction text + file names - Output: final combined abstraction + full file list
+
+   Chapter Generation!
+
+5. Order abstractions pedagogically 
+   ↓
+6. For each abstraction in order:
+   → Collect related files (based on abstraction files)
+   → Build progressive context (summaries of previous chapters)
+   → Generate individual chapter via LLM
+   ↓
+7. Combine all chapters into final tutorial structure

@@ -2,25 +2,26 @@ import os
 from dotenv import load_dotenv
 from langgraph.graph import StateGraph, START, END
 from state import State
-from nodes.abstractions_generator import generate_chunks, get_file_contents, generate_abstractions
+from generate_abstractions.abstractions_generator import generate_chunks, get_file_contents, generate_abstractions
+from generate_chapters.generate_chapters import generate_chapters
 
-# Load environment variables from .env file
 load_dotenv()
 
 graph = StateGraph(State)
 graph.add_node("generate_chunks", generate_chunks)
 graph.add_node("get_file_contents", get_file_contents)
 graph.add_node("generate_abstractions", generate_abstractions)
+graph.add_node("generate_chapters", generate_chapters)
 
 graph.add_edge(START, "generate_chunks")
 graph.add_edge("generate_chunks", "get_file_contents")
 graph.add_edge("get_file_contents", "generate_abstractions")
-graph.add_edge("generate_abstractions", END)
+graph.add_edge("generate_abstractions", "generate_chapters")
+graph.add_edge("generate_chapters", END)
 
 workflow = graph.compile()
 
 def run_workflow(token: str = None, repo: str = None):
-    # Use environment variables if not provided
     if token is None:
         token = os.getenv("GITHUB_TOKEN")
         if not token:
@@ -40,10 +41,4 @@ def run_workflow(token: str = None, repo: str = None):
     return result
 
 if __name__ == "__main__":
-    # Example usage - will use environment variables from .env file
-    try:
-        out = run_workflow()
-        print(out["abstractions"])
-    except ValueError as e:
-        print(f"Error: {e}")
-        print("Please check your .env file or pass the parameters directly to run_workflow()")
+    out = run_workflow(repo="TharunCodes07/devlabs-backend")

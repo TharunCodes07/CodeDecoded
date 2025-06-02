@@ -1,9 +1,7 @@
 import requests
-import json
 import re
 import base64
 import concurrent.futures
-import tiktoken
 
 
 def format_repository_structure(tree_data):

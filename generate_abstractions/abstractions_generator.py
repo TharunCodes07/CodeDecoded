@@ -1,11 +1,8 @@
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from LLM import model
-from tools.tools import get_repository_info, sanitize_json_response, fetch_file_contents, get_unique_file_paths, map_chunks_to_files, count_tokens_per_chunk, create_context_and_file_listing
-from prompts import generate_chunks_prompt, json_fixing_prompt, generate_abstractions_prompt, combine_abstractions_prompt
-from langchain_core.prompts import PromptTemplate
 import json
+from langchain_core.prompts import PromptTemplate
+from LLM import model
+from .tools.tools import get_repository_info, sanitize_json_response, fetch_file_contents, get_unique_file_paths, map_chunks_to_files, count_tokens_per_chunk, create_context_and_file_listing
+from prompts import generate_chunks_prompt, json_fixing_prompt, abstractions_json_fixing_prompt, generate_abstractions_prompt, combine_abstractions_prompt
 from state import State
 
 
@@ -56,13 +53,12 @@ def generate_abstractions(state: State) -> dict:
             context=context,
             file_listing=file_listing
         )
-        
         response = model.generate_content(formatted_prompt).text
         sanitized_response = sanitize_json_response(response)
         try:
             abstractions = json.loads(sanitized_response)
         except json.JSONDecodeError:
-            json_fix_template = PromptTemplate.from_template(json_fixing_prompt)
+            json_fix_template = PromptTemplate.from_template(abstractions_json_fixing_prompt)
             max_retries = 3
             current_try = 0
             while current_try < max_retries:
@@ -101,7 +97,6 @@ def generate_abstractions(state: State) -> dict:
                 context=chunk_context,
                 file_listing=chunk_file_listing
             )
-            
             response = model.generate_content(formatted_prompt).text
             sanitized_response = sanitize_json_response(response)
             
@@ -109,7 +104,7 @@ def generate_abstractions(state: State) -> dict:
                 chunk_json = json.loads(sanitized_response)
                 chunk_abstractions.extend(chunk_json)
             except json.JSONDecodeError:
-                json_fix_template = PromptTemplate.from_template(json_fixing_prompt)
+                json_fix_template = PromptTemplate.from_template(abstractions_json_fixing_prompt)
                 max_retries = 3
                 current_try = 0
                 
@@ -133,13 +128,12 @@ def generate_abstractions(state: State) -> dict:
             chunk_abstractions=chunk_abstractions_json
         )
         
-        
         response = model.generate_content(combine_prompt).text
         sanitized_response = sanitize_json_response(response)
         try:
             abstractions = json.loads(sanitized_response)
         except json.JSONDecodeError:
-            json_fix_template = PromptTemplate.from_template(json_fixing_prompt)
+            json_fix_template = PromptTemplate.from_template(abstractions_json_fixing_prompt)
             max_retries = 3
             current_try = 0
             while current_try < max_retries:

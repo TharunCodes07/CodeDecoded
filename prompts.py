@@ -45,6 +45,67 @@ Input:
 """
 
 
+chapter_json_fixing_prompt = """You are a JSON fixer for chapter generation responses.
+
+You will be given a string that is supposed to be a JSON object in the following format:
+
+{{
+  "markdown_content": "The complete markdown content for the chapter goes here...",
+  "summary": "A concise 2-3 sentence summary of what this chapter covers, including the main concepts and key takeaways for beginners."
+}}
+
+Your task:
+1. If the input is valid JSON, return it as-is.
+2. If it's invalid (e.g., extra text, explanations, trailing commas, missing brackets, or unescaped quotes in the content), fix it and return only the corrected JSON object.
+3. If the JSON appears to be truncated or incomplete, try to complete it by adding closing brackets/braces and quotes where needed.
+4. Properly escape any quotes, newlines, and special characters in the markdown_content and summary fields.
+5. Ensure the markdown_content contains properly formatted markdown without extra markdown code block wrappers (no ```markdown or ``` at the beginning/end).
+6. If the content appears to be cut off mid-sentence, add a note like "... [Content may be truncated]" to indicate incomplete content.
+7. Ensure both "markdown_content" and "summary" fields are present and contain valid string values.
+
+Do not include any explanation or text—only return the valid JSON object.
+
+Input:
+{response_text}
+"""
+
+
+abstractions_json_fixing_prompt = """You are a JSON fixer for abstractions generation responses.
+
+You will be given a string that is supposed to be a JSON array of objects in the following format:
+
+[
+  {{
+    "name": "Abstraction Name",
+    "description": "A detailed description of what this abstraction does...",
+    "file_paths": [
+      "path/to/file1.py",
+      "path/to/file2.js"
+    ]
+  }},
+  {{
+    "name": "Another Abstraction",
+    "description": "Another description...",
+    "file_paths": [
+      "path/to/another.py"
+    ]
+  }}
+]
+
+Your task:
+1. If the input is valid JSON, return it as-is.
+2. If it's invalid (e.g., extra text, explanations, trailing commas, missing brackets, or unescaped quotes), fix it and return only the corrected JSON array.
+3. Properly escape any quotes, newlines, and special characters in the name, description, and file_paths fields.
+4. Ensure each object has all required fields: name, description, and file_paths.
+5. Make sure file_paths is always an array, even if it contains only one file.
+
+Do not include any explanation or text—only return the valid JSON array.
+
+Input:
+{response_text}
+"""
+
+
 generate_abstractions_prompt = """For the project `{project_name}`:
 
 Codebase Context:
@@ -122,4 +183,65 @@ Return a JSON array with the final combined abstractions in this exact format:
 - **Aim for 5-8 well-detailed abstractions** rather than forcing everything into fewer buckets
 - **Write rich descriptions** that help newcomers understand both what the abstraction does and why it matters
 - **Prioritize core system components, architectural patterns, and key business logic**
+"""
+
+create_chapters_prompt = """
+Write a very beginner-friendly tutorial chapter (in Markdown format) for the project {project_name} about the concept: "{abstraction_name}". This is Chapter {chapter_num}.
+
+Concept Details:
+
+Name: {abstraction_name}
+Description:
+{abstraction_description}
+Complete Tutorial Structure:
+{complete_tutorial_structure}
+
+Context from previous chapters:
+{previous_chapters_summary}
+
+Relevant Code Snippets (Code itself remains unchanged):
+{file_context_str}
+
+Instructions for the chapter:
+
+Start with a clear heading (e.g., # Chapter {chapter_num} : {abstraction_name}). Use the provided concept name.
+
+If this is not the first chapter, begin with a brief transition from the previous chapter, referencing it with a proper Markdown link using its name.
+
+Begin with a high-level motivation explaining what problem this abstraction solves. Start with a central use case as a concrete example. The whole chapter should guide the reader to understand how to solve this use case. Make it very minimal and friendly to beginners.
+
+If the abstraction is complex, break it down into key concepts. Explain each concept one-by-one in a very beginner-friendly way.
+
+Explain how to use this abstraction to solve the use case. Give example inputs and outputs for code snippets (if the output isn't values, describe at a high level what will happen).
+
+Each code block should be BELOW 10 lines! If longer code blocks are needed, break them down into smaller pieces and walk through them one-by-one. Aggressively simplify the code to make it minimal. Use comments to skip non-important implementation details. Each code block should have a beginner-friendly explanation right after it.
+
+Describe the internal implementation to help understand what's under the hood. First provide a non-code or code-light walkthrough on what happens step-by-step when the abstraction is called. It's recommended to use a simple sequenceDiagram with a dummy example - keep it minimal with at most 5 participants to ensure clarity. If participant name has space, use: participant QP as Query Processing.
+
+Then dive deeper into code for the internal implementation with references to files. Provide example code blocks, but make them similarly simple and beginner-friendly. Explain.
+
+IMPORTANT: When you need to refer to other core abstractions covered in other chapters, ALWAYS use proper Markdown links like this: Chapter Title. Use the Complete Tutorial Structure above to find the correct filename and the chapter title. Translate the surrounding text.
+
+VISUAL EMPHASIS: Use mermaid diagrams to support learning. Stick to these three simple types:
+- **Flowcharts** for showing decision-making or process flows
+- **Class diagrams** for showing object or data relationships
+- **Sequence diagrams** for step-by-step call flow between components
+
+Use only these and keep each diagram minimal and beginner-friendly.
+
+Heavily use analogies and examples throughout to help beginners understand.
+
+End the chapter with a brief conclusion that summarizes what was learned and provides a transition to the next chapter. If there is a next chapter, use a proper Markdown link: Next Chapter Title.
+
+Ensure the tone is welcoming and easy for a newcomer to understand.
+
+Return the response as a JSON object in this exact format:
+
+```json
+{{
+  "markdown_content": "The complete markdown content for the chapter goes here...",
+  "summary": "A concise 2-3 sentence summary of what this chapter covers, including the main concepts and key takeaways for beginners."
+}}
+```
+Now, directly provide a super beginner-friendly response in the JSON format above:
 """
